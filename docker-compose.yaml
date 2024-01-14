@@ -1,0 +1,13 @@
+version: "3"
+services:
+  cutsheets:
+    image: ghcr.io/bitbyt3r/printerbot:main
+    restart: always
+    env_file:
+     - .env
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 30
+    restart: always

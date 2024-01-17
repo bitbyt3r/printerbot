@@ -1,6 +1,7 @@
 import os
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+import json
 import queue
 import tempfile
 import requests
@@ -13,7 +14,7 @@ print_queue = queue.Queue()
 def message_posted(event, say):
     if event['channel'] != os.environ['SLACK_CHANNEL']:
         return
-    if event['files']:
+    if "files" in event and event['files']:
         blocks = [
             {
                 "type": "section",
@@ -33,7 +34,8 @@ def message_posted(event, say):
                     "is_decimal_allowed": False,
                     "min_value": "1",
                     "initial_value": "1",
-                    "max_value": "100"
+                    "max_value": "100",
+                    "action_id": "copies"
                 },
                 "label": {
                     "type": "plain_text",
@@ -46,6 +48,7 @@ def message_posted(event, say):
                 "type": "input",
                 "element": {
                     "type": "static_select",
+                    "action_id": "printer",
                     "placeholder": {
                         "type": "plain_text",
                         "text": "Select a printer",
@@ -86,7 +89,7 @@ def message_posted(event, say):
                             "text": "Print",
                             "emoji": True
                         },
-                        "value": event['files'][0]['url_private_download'],
+                        "value": event['files'][0]['url_private'],
                         "action_id": "print"
                     }
                 ]
@@ -96,11 +99,20 @@ def message_posted(event, say):
             blocks=blocks,
             thread_ts=event['ts']
         )
+        
+@app.action("printer")
+def nop_printer(ack):
+    ack()
+    
+@app.action("copies")
+def nop_copies(ack):
+    ack()
 
 @app.action("print")
 def print_action(ack, say, body):
     ack()
     print(body['state'])
+    print(json.dumps(body, indent=2))
     copies = int(body['state']['values']['copies']['copies']['value'])
     printer = body['state']['values']['printer']['printer']['selected_option']['value']
     file_url = body['message']['blocks'][4]['elements'][0]['value']

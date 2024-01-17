@@ -127,7 +127,7 @@ def print_thread():
     while True:
         job = print_queue.get()
         print("Printing", job)
-        r = requests.get(job['file_url'], allow_redirects=True)
+        r = requests.get(job['file_url'], allow_redirects=True, headers={"Authorization": "Bearer {os.environ['SLACK_BOT_TOKEN']}"})
         with tempfile.NamedTemporaryFile(delete=False) as FILE:
             FILE.write(r.content)
             if os.system(f"lpr -H cups:631 -P {job['printer']} -# {job['copies']} {FILE.name}") == 0:
